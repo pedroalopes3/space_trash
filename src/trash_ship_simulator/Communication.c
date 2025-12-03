@@ -22,7 +22,7 @@ static CommHandle *comm_alloc(void) {
 }
 
 ///////////////////////////////////////
-// ---------- Client side ----------
+//            Client side 
 ///////////////////////////////////////
 
 CommHandle *comm_client_init(void) {
@@ -75,7 +75,7 @@ int comm_client_recv(CommHandle *h, void *buffer, size_t max_size) {
 }
 
 /////////////////////////////////////////
-// ---------- Server side ----------
+//             Server side 
 /////////////////////////////////////////
 
 CommHandle *comm_server_init(void) {
@@ -109,14 +109,33 @@ CommHandle *comm_server_init(void) {
     return h;
 }
 
-int comm_server_recv(CommHandle *h, void *buffer, size_t max_size) {
+int comm_server_recv(CommHandle *h, void *buffer, size_t max_size, int timeout_ms) {
     if (!h || !h->socket) return -1;
-    int rc = zmq_recv(h->socket, buffer, max_size, 0);  // blocking
+
+    zmq_pollitem_t items[] = {
+        { h->socket, 0, ZMQ_POLLIN, 0 }
+    };
+
+    int rc = zmq_poll(items, 1, timeout_ms);
     if (rc == -1) {
-        perror("comm_server_recv: zmq_recv");
+        perror("comm_server_recv: zmq_poll");
+        return -1;
     }
-    return rc;
+
+    if (items[0].revents & ZMQ_POLLIN) {
+        rc = zmq_recv(h->socket, buffer, max_size, 0);
+        if (rc == -1) {
+            perror("comm_server_recv: zmq_recv");
+            return -1;
+        }
+        return rc;
+    }
+    
+    return 0;
 }
+
+
+
 
 int comm_server_send(CommHandle *h, const void *data, size_t size) {
     if (!h || !h->socket) return -1;
@@ -128,7 +147,7 @@ int comm_server_send(CommHandle *h, const void *data, size_t size) {
 }
 
 //////////////////////////////////
-// ---------- Common ----------
+//           Common
 //////////////////////////////////
 
 void comm_close(CommHandle *h) {

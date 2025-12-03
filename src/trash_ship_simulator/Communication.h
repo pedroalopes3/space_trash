@@ -31,8 +31,8 @@ int comm_client_recv(CommHandle *h, void *buffer, size_t max_size);
 // Create context + REP socket and bind on ENDPOINT
 CommHandle *comm_server_init(void);
 
-// Receive a request (blocking)
-int comm_server_recv(CommHandle *h, void *buffer, size_t max_size);
+// Receive a request (non-blocking)
+int comm_server_recv(CommHandle *h, void *buffer, size_t max_size, int timeout_ms);
 
 // Send a reply (blocking)
 int comm_server_send(CommHandle *h, const void *data, size_t size);

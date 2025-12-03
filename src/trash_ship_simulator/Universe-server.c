@@ -3,8 +3,13 @@
 #include <unistd.h>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
-#include "SDL2/SDL_pixels.h"   
+#include "SDL2/SDL_pixels.h"  
+#include <stdlib.h>
+#include <time.h>
+#include <libconfig.h>
 
+#include "Universe-data.h"
+#include "Display.h" 
 #include "Communication.h"
 
 
@@ -15,13 +20,51 @@ int read_keys();
 int main(void)       
 {
 
-    // Initialize SDL
-    //
-    // returns zero on success else non-zero
-    if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {
-        printf("error initializing SDL: %s\n", SDL_GetError());
+    config_t cfg;
+    config_init(&cfg);
+
+    if(!config_read_file(&cfg, "universe-simulator.conf")) 
+    {
+        fprintf(stderr, "Config file error\n");
+        config_destroy(&cfg);
         return 1;
     }
+
+    int universe_dimensions;
+    config_lookup_int(&cfg, "universe_dimensions", &universe_dimensions);
+
+    int n_of_planets;
+    config_lookup_int(&cfg, "n_of_planets", &n_of_planets);
+
+    int max_trash;
+    config_lookup_int(&cfg, "max_trash", &max_trash);
+
+    int initial_trash;
+    config_lookup_int(&cfg, "initial_trash", &initial_trash);
+
+    config_destroy(&cfg);
+
+    struct planet_stucture *planets = malloc(sizeof(*planets) * n_of_planets);
+    struct trash_stucture *trash = malloc(sizeof(*trash) * initial_trash);
+    if (!planets || !trash) 
+    {
+        fprintf(stderr, "Allocation failed\n");
+        return 1;
+    }
+
+    universe_data_init(planets, n_of_planets, trash, initial_trash, universe_dimensions);
+
+    SDL_Window *win = NULL;
+    SDL_Renderer *rend = NULL;
+    universe_display_init(&win, &rend, universe_dimensions);
+    if (!win || !rend) 
+    {
+        fprintf(stderr, "Failed to create window/renderer\n");
+        free(planets);
+        free(trash);
+        return 1;
+    }
+
 
     // Initialize communication with server
 
@@ -32,68 +75,47 @@ int main(void)
     }
 
 
-    // Create SDL window - THIS IS REQUIRED for keyboard input
-   SDL_Window* window = SDL_CreateWindow("Universe Server", // creates a window
-                                       SDL_WINDOWPOS_CENTERED,
-                                       SDL_WINDOWPOS_CENTERED,
-                                       1000, 1000, 0);
-
-    if (!window) {
-        printf("error creating window: %s\n", SDL_GetError());
-        SDL_Quit();
-        return 1;
-    }
-
-        // triggers the program that controls
-    // your graphics hardware and sets flags
-    Uint32 render_flags = SDL_RENDERER_ACCELERATED;
-
-    SDL_Renderer* rend = SDL_CreateRenderer(window, -1, render_flags);
-
-    SDL_Color backgroud_color;
-    backgroud_color.r = 255;
-    backgroud_color.g = 255;
-    backgroud_color.b = 255;
-    backgroud_color.a = 255;
-    SDL_SetRenderDrawColor(rend, 
-        backgroud_color.r, backgroud_color.g, backgroud_color.b, 
-        backgroud_color.a);
-    SDL_RenderClear(rend);
-    SDL_RenderPresent(rend);
-
     int close = 0;
     int key_pressed = 0;
     printf("antes\n");
+
+    draw_universe(initial_trash, n_of_planets, planets, trash, rend);
+
     while (!close) {
-        key_pressed = read_keys();
-        if (key_pressed != 0){ 
-            printf("Key pressed code: %d\n", key_pressed);
+
+        SDL_Event event;
+
+        while (SDL_PollEvent(&event)) {
+            if (event.type == SDL_QUIT) {
+                key_pressed = 1;  // Handle close button event
+             }
         }
        
         char buffer[128];
-
+        
         // Receive request
-        int n = comm_server_recv(comm, buffer, sizeof(buffer)-1);
-            if (n <= 0) {
-                continue; 
-            }
-
+        int n = comm_server_recv(comm, buffer, sizeof(buffer)-1,10);
+        if (n>0){
             buffer[n] = '\0';
             printf("Server request: %s\n", buffer);
-
+                    
             //Send reply
             const char *reply = "thanks!!!!";
-            comm_server_send(comm, reply, strlen(reply));
+            comm_server_send(comm, reply, strlen(reply));   
 
+            draw_universe(initial_trash, n_of_planets, planets, trash, rend);
+        }
             
         
-             if (key_pressed == 1){
-                close = 1;
-             }
-            sleep(0.1);
+        if (key_pressed == 1){
+            close = 1;
+        }
+
+        SDL_Delay(10);
+
         }
     comm_close(comm);
-    SDL_DestroyWindow(window);
+    SDL_DestroyWindow(win);
     SDL_Quit();
     return 0;
 }
@@ -102,15 +124,10 @@ int read_keys(){
     int pressed_key_code = 0;
     SDL_Event event;
 
-    // Events management
-    SDL_PollEvent(&event);
-
-    switch (event.type) {
-        case SDL_QUIT: 
-            // handling of close button
-            pressed_key_code = 1;
-            break;
-            
+    while (SDL_PollEvent(&event)) {
+        if (event.type == SDL_QUIT) {
+            pressed_key_code = 1;  // Handle close button event
+        }
     }
      
     return pressed_key_code;
