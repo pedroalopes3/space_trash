@@ -34,9 +34,13 @@ void draw_universe(int initial_trash, int n_of_planets, struct planet_stucture p
     for (int i = 0; i < n_of_planets; i++) 
     {
         if (planets[i].isrecycle)
+        {
             filledCircleColor(rend, (int)planets[i].x, (int)planets[i].y, PLANET_RADIUS, SDL_ColorToUint(recycle_planet_color));
+        } 
         else
+        {
             filledCircleColor(rend, (int)planets[i].x, (int)planets[i].y, PLANET_RADIUS, SDL_ColorToUint(planet_color));
+        }
     }
 
     
