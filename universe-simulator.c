@@ -19,6 +19,7 @@ Uint32 timer_callback(Uint32 interval, void* param){
     return interval;
 }
 
+
 int main(int argc, char *argv[]){
     
     config_t cfg;
@@ -46,14 +47,14 @@ int main(int argc, char *argv[]){
     config_destroy(&cfg);
 
     struct planet_stucture *planets = malloc(sizeof(*planets) * n_of_planets);
-    struct trash_stucture *trash = malloc(sizeof(*trash) * initial_trash);
+    struct trash_stucture *trash = malloc(sizeof(*trash) * max_trash);
     if (!planets || !trash) 
     {
         fprintf(stderr, "Allocation failed\n");
         return 1;
     }
 
-    universe_data_init(planets, n_of_planets, trash, initial_trash, universe_dimensions);
+    universe_data_init(planets, n_of_planets, trash, initial_trash, universe_dimensions, max_trash);
 
     SDL_Window *win = NULL;
     SDL_Renderer *rend = NULL;
@@ -70,12 +71,14 @@ int main(int argc, char *argv[]){
 
     SDL_TimerID timer_id = 0;
     timer_id = SDL_AddTimer(10,(SDL_TimerCallback)timer_callback, NULL);
-
+    SDL_TimerID trash_timer_id = 0;
+    int trash_count = initial_trash;
     while (!close) {
         
-        if (initial_trash >= max_trash) 
+        if (trash_count >= max_trash) 
         {
             close = 1;
+            printf("Universe imploded from too much trash\n");
             break;
         }
 
@@ -88,8 +91,9 @@ int main(int argc, char *argv[]){
             case SDL_USEREVENT:
                 if (event.user.code == 2) 
                 {
-                    physics_update(planets, n_of_planets, trash, initial_trash, universe_dimensions);
-                    draw_universe(initial_trash, n_of_planets, planets, trash, rend);
+                    physics_update(planets, n_of_planets, trash, max_trash, universe_dimensions);
+                    draw_universe(max_trash, n_of_planets, planets, trash, rend);
+                    trash_count = update_trash_count(trash, max_trash);
                 }
                 break;
             default:

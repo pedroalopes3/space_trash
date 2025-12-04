@@ -26,19 +26,29 @@ void draw_universe(int initial_trash, int n_of_planets, struct planet_stucture p
     SDL_Color backgroud_color = {255,255,255,0};
     SDL_Color planet_color = {0,0,255,255};
     SDL_Color trash_color = {255,0,0,255};
+    SDL_Color recycle_planet_color = {0,255,0,255};
 
     SDL_SetRenderDrawColor(rend, backgroud_color.r, backgroud_color.g, backgroud_color.b, backgroud_color.a);
     SDL_RenderClear(rend);
 
-    for (int i = 0; i < initial_trash; i++) 
-    {
-        filledCircleColor(rend, (int)trash[i].x, (int)trash[i].y, 5, SDL_ColorToUint(trash_color));
-    }
-
     for (int i = 0; i < n_of_planets; i++) 
     {
-        filledCircleColor(rend, (int)planets[i].x, (int)planets[i].y, PLANET_RADIUS, SDL_ColorToUint(planet_color));
+        if (planets[i].isrecycle)
+            filledCircleColor(rend, (int)planets[i].x, (int)planets[i].y, PLANET_RADIUS, SDL_ColorToUint(recycle_planet_color));
+        else
+            filledCircleColor(rend, (int)planets[i].x, (int)planets[i].y, PLANET_RADIUS, SDL_ColorToUint(planet_color));
     }
+
+    
+    for (int i = 0; i < initial_trash; i++) 
+    {
+        if (trash[i].status)
+        {
+            filledCircleColor(rend, (int)trash[i].x, (int)trash[i].y, 5, SDL_ColorToUint(trash_color));
+        }
+        
+    }
+
     
     SDL_RenderPresent(rend);
 }

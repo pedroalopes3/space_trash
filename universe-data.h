@@ -21,7 +21,8 @@ struct planet_stucture
     char name; 
     float x; 
     float y; 
-    int mass; 
+    int mass;
+    int isrecycle; 
 };
 
 struct trash_stucture 
@@ -30,10 +31,13 @@ struct trash_stucture
     float y; 
     int mass; 
     vector velocity; 
-    vector acceleration; 
+    vector acceleration;
+    int status; 
 };
 
-void universe_data_init(struct planet_stucture planets[], int n_of_planets,struct trash_stucture trash[], int initial_trash, int universe_dimensions);
+void universe_data_init(struct planet_stucture planets[], int n_of_planets,struct trash_stucture trash[], int initial_trash, int universe_dimensions,int max_trash);
+
+int update_trash_count(struct trash_stucture trash[], int max_trash);
 
 #endif 
     
