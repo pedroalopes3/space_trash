@@ -91,46 +91,52 @@ int main(void)
 
     int close = 0;
     int key_pressed = 0;
+    // next available client ID
+    int client_id = 0;
     draw_universe(initial_trash, n_of_planets, planets, trash, rend,ship);
 
-    while (!close) {
+    printf("Server ready\n");
 
+    // Main loop
+    while (!close) {
         SDL_Event event;
 
+        // Handle SDL events
         while (SDL_PollEvent(&event)) {
             if (event.type == SDL_QUIT) {
-                key_pressed = 1;  // Handle close button event
-             }
-        }
-       
-        char buffer[128];
-        
-        // Receive request
-        int n = comm_server_recv(comm, buffer, sizeof(buffer)-1,10);
-        if (n>0){
-            buffer[n] = '\0';
-            printf("Server request: %s\n", buffer);
-                    
-            //Send reply
-            const char *reply = "thanks!!!!";
-            comm_server_send(comm, reply, strlen(reply));   
-
-            check_collisions(planets, n_of_planets, trash, max_trash, universe_dimensions,ship,ship_capacity);
-            for (int i = 0; i < n_of_planets; i++) 
-            {
-                correct_position(&ship[i].x, universe_dimensions);
-                correct_position(&ship[i].y, universe_dimensions);
+                key_pressed = 1;  // Set flag to exit loop
             }
-            draw_universe(initial_trash, n_of_planets, planets, trash, rend,ship);
-        }
-            
-        
-        if (key_pressed == 1){
-            close = 1;
         }
 
+        // Receive messages
+        uint8_t buffer[1024];
+        int len = comm_server_recv(comm, buffer, sizeof(buffer));
+
+        if (len > 0) {
+            if (buffer[len-1] == '\0' && strcmp((char *)buffer, "HELLO") == 0) {
+                printf("Server: received HELLO\n");
+                comm_server_send(comm, "HELLO_RESPONSE", 14);
+            } else {
+                join_received_message(comm, buffer, len, &client_id);
+            }
         }
-    
+
+        // Other operations
+        check_collisions(planets, n_of_planets, trash, max_trash, universe_dimensions, ship, ship_capacity);
+        for (int i = 0; i < n_of_planets; i++) {
+            correct_position(&ship[i].x, universe_dimensions);
+            correct_position(&ship[i].y, universe_dimensions);
+        }
+
+        // Draw the updated universe
+        draw_universe(initial_trash, n_of_planets, planets, trash, rend, ship);
+
+        if (key_pressed == 1) {
+            close = 1;  // Close the server if SDL quit event is triggered
+        }
+        usleep(10000);  /* small sleep to avoid 100% CPU */
+    }
+
     // Cleanup
     comm_close(comm);
     destroy_universe(rend, win);
@@ -138,19 +144,6 @@ int main(void)
     free(trash);
     free(ship);
     return 0;
-}
-
-int read_keys(){
-    int pressed_key_code = 0;
-    SDL_Event event;
-
-    while (SDL_PollEvent(&event)) {
-        if (event.type == SDL_QUIT) {
-            pressed_key_code = 1;  // Handle close button event
-        }
-    }
-     
-    return pressed_key_code;
 }
 
 void correct_position(float *coord, int universe_dimensions) 

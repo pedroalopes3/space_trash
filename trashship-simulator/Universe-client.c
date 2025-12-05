@@ -63,24 +63,43 @@ int main(void)
 
     int close = 0;
     int key_pressed = 0;
+
+    // your "client" id, you still don't have 
+    int* client_id = malloc(sizeof(int));
+    *client_id = -1;
+
+    /* Test: send HELLO first */
+    send_hello(comm);
+    receive_hello(comm);
+    
+    /* Now send JOIN */
+    send_join_command(comm);
+    receive_client_id(comm, client_id);
+    printf("Client assigned ID: %d\n", *client_id);
+    
+
+
+
     printf("antes\n");
     while (!close) {
         key_pressed = read_keys();
         if (key_pressed != 0){ 
             printf("Key pressed code: %d\n", key_pressed);
 
-            // Send Key to server
-            char msg[8];
-            snprintf(msg, sizeof(msg), "%d", key_pressed);
-            comm_client_send(comm,msg, sizeof(msg)+1);
+            send_move_command(comm, *client_id,key_pressed);
+            
+            // // Send Key to server
+            // char msg[8];
+            // snprintf(msg, sizeof(msg), "%d", key_pressed);
+            // comm_client_send(comm,msg, sizeof(msg)+1);
 
-            // Server Reply
-            char reply[100];
-            int n = comm_client_recv(comm, reply, sizeof(reply));
-            if (n > 0) {
-                reply[n] = '\0';
-                printf("Server: %s\n", reply);
-            }
+            // // Server Reply
+            // char reply[100];
+            // int n = comm_client_recv(comm, reply, sizeof(reply));
+            // if (n > 0) {
+            //     reply[n] = '\0';
+            //     printf("Server: %s\n", reply);
+            // }
 
         }
         if (key_pressed == 1)

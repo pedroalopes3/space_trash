@@ -1,7 +1,8 @@
 #ifndef COMMUNICATION_H
 #define COMMUNICATION_H
 
-#include <stddef.h>   // size_t
+#include <stddef.h>   
+#include "protoc/Communication.pb-c.h" 
 
 // Common server endpoint 
 #define COMM_ENDPOINT "tcp://127.0.0.1:5555"
@@ -24,6 +25,15 @@ int comm_client_send(CommHandle *h, const void *data, size_t size);
 // Receive reply (blocking)
 int comm_client_recv(CommHandle *h, void *buffer, size_t max_size);
 
+void send_join_command(CommHandle *comm);
+
+void receive_client_id(CommHandle *comm, int *client_id);
+
+void send_move_command(CommHandle *comm, int client_id,int key_pressed);
+
+void send_hello(CommHandle *comm);
+void receive_hello(CommHandle *comm);
+
 /////////////////////////////////////////
 // ---------- Server side ----------
 /////////////////////////////////////////
@@ -32,10 +42,14 @@ int comm_client_recv(CommHandle *h, void *buffer, size_t max_size);
 CommHandle *comm_server_init(void);
 
 // Receive a request (non-blocking)
-int comm_server_recv(CommHandle *h, void *buffer, size_t max_size, int timeout_ms);
+int comm_server_recv(CommHandle *h, void *buffer, size_t max_size);
 
 // Send a reply (blocking)
 int comm_server_send(CommHandle *h, const void *data, size_t size);
+
+void join_received_message(CommHandle *comm, uint8_t *buffer, int len, int* client_id) ;
+
+Trashsimulator__MoveCommand *process_received_message(CommHandle *comm);
 
 ///////////////////////////////////////
 // ---------- Common ----------
