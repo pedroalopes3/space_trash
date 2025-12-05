@@ -1,29 +1,26 @@
-// Libraries
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdint.h>
 #include <unistd.h>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 #include "SDL2/SDL_pixels.h"   
 
 #include "Communication.h"
+#include "messages.pb-c.h"
 
 
-// Function Declaration
 int read_keys();   
 
-// Main Function
+
 int main(void)       
 {
 
-    // Initialize SDL
-    //
-    // returns zero on success else non-zero
     if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {
         printf("error initializing SDL: %s\n", SDL_GetError());
         return 1;
     }
-
-    // Initialize communication with server
 
     CommHandle *comm = comm_client_init();
     if (!comm) {
@@ -63,31 +60,82 @@ int main(void)
 
     int close = 0;
     int key_pressed = 0;
-    printf("antes\n");
+    uint32_t client_id = 0;
+
+    //First: Send ClientMessage with ship_id = 0
+    
+        Trashship__ClientMessage msg = TRASHSHIP__CLIENT_MESSAGE__INIT;
+        msg.has_ship_id = 1;
+        msg.ship_id = 0;   
+        msg.has_command = 1;
+        msg.command = 0;
+        size_t msg_len = trashship__client_message__get_packed_size(&msg);
+        if (msg_len == 0) 
+        {
+            fprintf(stderr, "Error: ClientMessage packed to 0 bytes\n");
+            return -1;
+        }
+        uint8_t msg_buf[256];
+        trashship__client_message__pack(&msg, msg_buf);
+        comm_client_send(comm, msg_buf, msg_len);
+
+        //Second: Receive ServerMessage with assigned id
+        uint8_t reply_buf[256];
+        int n = comm_client_recv(comm, reply_buf, sizeof(reply_buf));
+        if (n > 0) 
+        {
+            Trashship__ServerMessage *reply = trashship__server_message__unpack(NULL, n, reply_buf);
+            if (reply) 
+            {
+                client_id = reply->ship_id;
+                trashship__server_message__free_unpacked(reply, NULL);
+            } 
+            else 
+            {
+                fprintf(stderr, "Failed to unpack server message\n");
+            }
+        } 
+        else 
+        {
+            printf("Failed to get ship id from server (n=%d)\n", n);
+        }
+
     while (!close) {
         key_pressed = read_keys();
         if (key_pressed != 0){ 
-            printf("Key pressed code: %d\n", key_pressed);
+            // Now the ClientMessage is sent with both the command and the ID; since the ID was randomly calculated and assigned by 
+            //server, clients will have a very difficult time cheating by pretending to be another ship.
+            Trashship__ClientMessage msg = TRASHSHIP__CLIENT_MESSAGE__INIT;
+            msg.has_ship_id = 1;
+            msg.ship_id = client_id;
+            msg.has_command = 1;
+            msg.command = (uint32_t)key_pressed;
+            size_t msg_len = trashship__client_message__get_packed_size(&msg);
+            uint8_t msg_buf[256];
+            trashship__client_message__pack(&msg, msg_buf);
+            comm_client_send(comm, msg_buf, msg_len);
 
-            // Send Key to server
-            char msg[8];
-            snprintf(msg, sizeof(msg), "%d", key_pressed);
-            comm_client_send(comm,msg, sizeof(msg)+1);
-
-            // Server Reply
-            char reply[100];
-            int n = comm_client_recv(comm, reply, sizeof(reply));
-            if (n > 0) {
-                reply[n] = '\0';
-                printf("Server: %s\n", reply);
+            // Receive ServerMessage reply
+            uint8_t reply_buf[256];
+            int n = comm_client_recv(comm, reply_buf, sizeof(reply_buf));
+            if (n > 0) 
+            {
+                Trashship__ServerMessage *reply = trashship__server_message__unpack(NULL, n, reply_buf);
+                if (reply) 
+                {
+                    if (reply->status != 0) 
+                    {
+                        printf("Server error status: %d\n", reply->status);
+                    }
+                    trashship__server_message__free_unpacked(reply, NULL);
+                }
             }
-
         }
+
         if (key_pressed == 1)
         {
             close = 1;
         }
-        sleep(0.1);
     }
 
     SDL_DestroyWindow(window);
@@ -96,23 +144,19 @@ int main(void)
 }
 
 
-// read keys from keyboard
-
+// Read keyboard input
 int read_keys(){
     int pressed_key_code = 0;
     SDL_Event event;
 
-    // Events management
     SDL_PollEvent(&event);
 
     switch (event.type) {
         case SDL_QUIT: 
-            // handling of close button
             pressed_key_code = 1;
             break;
 
         case SDL_KEYDOWN:
-            // keyboard API for key pressed
             switch (event.key.keysym.scancode) {
                 case SDL_SCANCODE_UP:
                     pressed_key_code = 2;

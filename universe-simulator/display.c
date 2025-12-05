@@ -9,6 +9,7 @@ Uint32 SDL_ColorToUint(SDL_Color c){
     return (Uint32)((c.a << 24) + (c.b << 16) + (c.g << 8)+ (c.r << 0));
 }
 
+//SDL window and renderer initialization
 void universe_display_init(SDL_Window **out_win, SDL_Renderer **out_rend, int universe_dimensions)
 {
     if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {
@@ -21,6 +22,7 @@ void universe_display_init(SDL_Window **out_win, SDL_Renderer **out_rend, int un
     *out_rend = SDL_CreateRenderer(*out_win, -1, SDL_RENDERER_ACCELERATED);
 }
 
+//The function that draws the universe renders the planets first, then the trash. This way, the trash will appear "on top" of the trash
 void draw_universe(int initial_trash, int n_of_planets, struct planet_stucture planets[], struct trash_stucture trash[], SDL_Renderer* rend)
 {
     SDL_Color backgroud_color = {255,255,255,0};
@@ -53,10 +55,10 @@ void draw_universe(int initial_trash, int n_of_planets, struct planet_stucture p
         
     }
 
-    
     SDL_RenderPresent(rend);
 }
 
+//Once the simulation ends, close the SDL window and renderer
 void destroy_universe(SDL_Renderer* rend, SDL_Window* win)
 {
     SDL_DestroyRenderer(rend);

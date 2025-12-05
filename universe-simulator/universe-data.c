@@ -1,6 +1,7 @@
 #include "universe-data.h"
 #include <time.h>
 
+//Initilializes planets and trash with random positions; randomly picks a recycle planet; "enables" the initial amount of trash
 void universe_data_init(struct planet_stucture planets[], int n_of_planets,struct trash_stucture trash[], int initial_trash, int universe_dimensions, int max_trash)
 {
     srand((unsigned)time(NULL));
@@ -34,6 +35,7 @@ void universe_data_init(struct planet_stucture planets[], int n_of_planets,struc
     }
 }
 
+//Simply counts how many trash are "enabled"
 int update_trash_count(struct trash_stucture trash[], int max_trash)
 {
     int count = 0;

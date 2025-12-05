@@ -4,7 +4,7 @@
 #include <time.h>
 #include "physics-rules.h"
 
-static inline vector make_vector(float x, float y) 
+vector make_vector(float x, float y) 
 {
     vector v;
     v.amplitude = sqrtf(x*x + y*y);
@@ -12,7 +12,7 @@ static inline vector make_vector(float x, float y)
     return v;
 }
 
-static inline vector add_vectors(vector a, vector b) 
+vector add_vectors(vector a, vector b) 
 {
     float ax = a.amplitude * cosf(a.angle);
     float ay = a.amplitude * sinf(a.angle);
@@ -21,12 +21,13 @@ static inline vector add_vectors(vector a, vector b)
     return make_vector(ax + bx, ay + by);
 }
 
-static inline vector scale_vector(vector v, float s) 
+vector scale_vector(vector v, float s) 
 {
     v.amplitude *= s;
     return v;
 }
 
+//Function that allows objects to "wrap around" the universe borders
 void correct_position(float *coord, int universe_dimensions) 
 {
     if (*coord < 0) *coord += universe_dimensions;
@@ -80,6 +81,8 @@ void new_trash_position(struct trash_stucture trash[], int total_trash,int dims)
     }
 }
 
+//Checks all collisions within the universe: It goes through each trash;
+//if a trash is enabled, it checks it's distance to all planets; if it's less than 1, it "enables" a new trash
 void check_collisions(struct planet_stucture planets[], int total_planets, struct trash_stucture trash[], int total_trash, int universe_dimensions) {
     for(int i = 0;i < total_trash;i++) 
     {
@@ -104,6 +107,7 @@ void check_collisions(struct planet_stucture planets[], int total_planets, struc
     }
 }
 
+//All emcopassing function that updates the physics of the universe
 void physics_update(struct planet_stucture planets[], int n_of_planets, struct trash_stucture trash[], int initial_trash, int universe_dimensions)
 {
     new_trash_acceleration(planets,n_of_planets,trash,initial_trash);

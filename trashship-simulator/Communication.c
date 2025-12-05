@@ -6,10 +6,6 @@
 
 
 
-
-
-// allocate and initialize CommHandle struct
-
 static CommHandle *comm_alloc(void) {
     CommHandle *h = (CommHandle *)malloc(sizeof(CommHandle));
     if (!h) {
@@ -67,7 +63,7 @@ int comm_client_send(CommHandle *h, const void *data, size_t size) {
 
 int comm_client_recv(CommHandle *h, void *buffer, size_t max_size) {
     if (!h || !h->socket) return -1;
-    int rc = zmq_recv(h->socket, buffer, max_size, 0);  // blocking recv
+    int rc = zmq_recv(h->socket, buffer, max_size, 0);
     if (rc == -1) {
         perror("comm_client_recv: zmq_recv");
     }
@@ -109,29 +105,13 @@ CommHandle *comm_server_init(void) {
     return h;
 }
 
-int comm_server_recv(CommHandle *h, void *buffer, size_t max_size, int timeout_ms) {
+int comm_server_recv(CommHandle *h, void *buffer, size_t max_size) {
     if (!h || !h->socket) return -1;
-
-    zmq_pollitem_t items[] = {
-        { h->socket, 0, ZMQ_POLLIN, 0 }
-    };
-
-    int rc = zmq_poll(items, 1, timeout_ms);
+    int rc = zmq_recv(h->socket, buffer, max_size, 0); 
     if (rc == -1) {
-        perror("comm_server_recv: zmq_poll");
-        return -1;
+        perror("comm_server_recv: zmq_recv");
     }
-
-    if (items[0].revents & ZMQ_POLLIN) {
-        rc = zmq_recv(h->socket, buffer, max_size, 0);
-        if (rc == -1) {
-            perror("comm_server_recv: zmq_recv");
-            return -1;
-        }
-        return rc;
-    }
-    
-    return 0;
+    return rc;
 }
 
 

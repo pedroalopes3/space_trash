@@ -1,0 +1,13 @@
+syntax = "proto2";
+
+package trashship;
+
+message ClientMessage {
+    optional uint32 ship_id = 1;  // 0 = new client, otherwise existing id
+    optional uint32 command = 2;   // movement command code
+}
+
+message ServerMessage {
+    optional uint32 ship_id = 1;   // assigned or echoed ship id
+    optional int32  status = 2;    // 0 = ok, negative = error
+}

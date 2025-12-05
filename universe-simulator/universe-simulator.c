@@ -22,6 +22,7 @@ Uint32 timer_callback(Uint32 interval, void* param){
 
 int main(int argc, char *argv[]){
     
+    // Read and save variables from the config file
     config_t cfg;
     config_init(&cfg);
 
@@ -46,6 +47,7 @@ int main(int argc, char *argv[]){
 
     config_destroy(&cfg);
 
+    //Allocate space for the planet and trash structures
     struct planet_stucture *planets = malloc(sizeof(*planets) * n_of_planets);
     struct trash_stucture *trash = malloc(sizeof(*trash) * max_trash);
     if (!planets || !trash) 
@@ -91,6 +93,8 @@ int main(int argc, char *argv[]){
             case SDL_USEREVENT:
                 if (event.user.code == 2) 
                 {
+                    //Main Universe loop: every 10 ms the timer triggers this event, which updates the physics state of the universe
+                    //before drawing it again and updating the trash count
                     physics_update(planets, n_of_planets, trash, max_trash, universe_dimensions);
                     draw_universe(max_trash, n_of_planets, planets, trash, rend);
                     trash_count = update_trash_count(trash, max_trash);

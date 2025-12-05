@@ -9,6 +9,7 @@ Uint32 SDL_ColorToUint(SDL_Color c){
     return (Uint32)((c.a << 24) + (c.b << 16) + (c.g << 8)+ (c.r << 0));
 }
 
+//SDL window and renderer initialization
 void universe_display_init(SDL_Window **out_win, SDL_Renderer **out_rend, int universe_dimensions)
 {
     if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {
@@ -21,6 +22,8 @@ void universe_display_init(SDL_Window **out_win, SDL_Renderer **out_rend, int un
     *out_rend = SDL_CreateRenderer(*out_win, -1, SDL_RENDERER_ACCELERATED);
 }
 
+//The function that draws the universe renders in the following order: planets, trash, ships. This way, ships will appear "on top" of 
+//trash and planets, and trash will appear "on top" of planets.
 void draw_universe(int initial_trash, int n_of_planets, struct planet_stucture planets[], struct trash_stucture trash[], SDL_Renderer* rend, struct trash_ship ship[])
 {
     SDL_Color backgroud_color = {255,255,255,0};
@@ -35,12 +38,15 @@ void draw_universe(int initial_trash, int n_of_planets, struct planet_stucture p
     for (int i = 0; i < n_of_planets; i++) 
     {
         if (planets[i].isrecycle)
+        {
             filledCircleColor(rend, (int)planets[i].x, (int)planets[i].y, PLANET_RADIUS, SDL_ColorToUint(recycle_planet_color));
+        }
         else
+        {
             filledCircleColor(rend, (int)planets[i].x, (int)planets[i].y, PLANET_RADIUS, SDL_ColorToUint(planet_color));
+        }
     }
 
-    
     for (int i = 0; i < initial_trash; i++) 
     {
         if (trash[i].status)
@@ -52,7 +58,7 @@ void draw_universe(int initial_trash, int n_of_planets, struct planet_stucture p
 
     for (int i = 0; i < n_of_planets; i++) 
     {
-        if(ship[i].connected)
+        if(ship[i].ID)
         {
             filledCircleColor(rend, (int)ship[i].x, (int)ship[i].y, 10, SDL_ColorToUint(ship_color));
         }
@@ -61,6 +67,7 @@ void draw_universe(int initial_trash, int n_of_planets, struct planet_stucture p
     SDL_RenderPresent(rend);
 }
 
+//Once the simulation ends, close the SDL window and renderer
 void destroy_universe(SDL_Renderer* rend, SDL_Window* win)
 {
     SDL_DestroyRenderer(rend);

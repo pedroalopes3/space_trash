@@ -40,7 +40,6 @@ struct trash_ship
     float x; 
     float y; 
     int capacity;
-    int connected; 
     int ID;
 };
 void universe_data_init(struct planet_stucture planets[], int n_of_planets,struct trash_stucture trash[], int initial_trash, int universe_dimensions,int max_trash, struct trash_ship ship[]);
