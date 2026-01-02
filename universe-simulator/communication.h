@@ -3,8 +3,9 @@
 
 #include <stddef.h>   // size_t
 
-// Common server endpoint 
+// Common server endpoints
 #define COMM_ENDPOINT "tcp://127.0.0.1:5555"
+#define COMM_PUBSUB_ENDPOINT "tcp://127.0.0.1:5556"
 
 typedef struct {
     void *context;   // ZMQ context
@@ -36,6 +37,26 @@ int comm_server_recv(CommHandle *h, void *buffer, size_t max_size);
 
 // Send a reply (blocking)
 int comm_server_send(CommHandle *h, const void *data, size_t size);
+
+/////////////////////////////////////////
+// ---------- Publisher side ----------
+/////////////////////////////////////////
+
+// Create context + PUB socket and bind on ENDPOINT
+CommHandle *comm_publisher_init(void);
+
+// Publish a message (non-blocking for PUB)
+int comm_publisher_send(CommHandle *h, const void *data, size_t size);
+
+/////////////////////////////////////////
+// ---------- Subscriber side ----------
+/////////////////////////////////////////
+
+// Create context + SUB socket, connect and subscribe to all messages
+CommHandle *comm_subscriber_init(void);
+
+// Receive a published message (blocking)
+int comm_subscriber_recv(CommHandle *h, void *buffer, size_t max_size);
 
 ///////////////////////////////////////
 // ---------- Common ----------

@@ -2,10 +2,19 @@
 #include <time.h>
 
 //Initilializes planets and trash with random positions; randomly picks a recycle planet; "enables" the initial amount of trash
-void universe_data_init(struct planet_stucture planets[], int n_of_planets,struct trash_stucture trash[], int initial_trash, int universe_dimensions, int max_trash)
+void universe_data_init(struct planet_stucture planets[], int n_of_planets,struct trash_stucture trash[], int initial_trash, int universe_dimensions, int max_trash, struct trash_ship ship[])
 {
     srand((unsigned)time(NULL));
     
+    for (int i = 0; i < n_of_planets; i++) 
+    {
+        ship[i].x = rand() % universe_dimensions;
+        ship[i].y = rand() % universe_dimensions;
+        ship[i].capacity = 0;
+        ship[i].ID = 0;
+        ship[i].mass = SHIP_MASS;
+    }
+
     for (int i = 0; i < n_of_planets; i++) 
     {
         planets[i].x = rand() % universe_dimensions;
@@ -48,3 +57,4 @@ int update_trash_count(struct trash_stucture trash[], int max_trash)
     }
     return count;
 }
+

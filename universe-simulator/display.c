@@ -18,17 +18,31 @@ void universe_display_init(SDL_Window **out_win, SDL_Renderer **out_rend, int un
         *out_rend = NULL;
         return;
     }
-    *out_win = SDL_CreateWindow("Universe-Simulator", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, universe_dimensions, universe_dimensions, 0);
+    *out_win = SDL_CreateWindow("Universe-Server", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, universe_dimensions, universe_dimensions, 0);
+    *out_rend = SDL_CreateRenderer(*out_win, -1, SDL_RENDERER_ACCELERATED);
+}
+
+void client_display_init(SDL_Window **out_win, SDL_Renderer **out_rend, int universe_dimensions)
+{
+    if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {
+        fprintf(stderr, "SDL init error: %s\n", SDL_GetError());
+        *out_win = NULL;
+        *out_rend = NULL;
+        return;
+    }
+    *out_win = SDL_CreateWindow("Trashship-Client", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, universe_dimensions, universe_dimensions, 0);
     *out_rend = SDL_CreateRenderer(*out_win, -1, SDL_RENDERER_ACCELERATED);
 }
 
 //The function that draws the universe renders the planets first, then the trash. This way, the trash will appear "on top" of the trash
-void draw_universe(int initial_trash, int n_of_planets, struct planet_stucture planets[], struct trash_stucture trash[], SDL_Renderer* rend)
+void draw_universe(int initial_trash, int n_of_planets, struct planet_stucture planets[], struct trash_stucture trash[], SDL_Renderer* rend, struct trash_ship ship[])
 {
     SDL_Color backgroud_color = {255,255,255,0};
     SDL_Color planet_color = {0,0,255,255};
     SDL_Color trash_color = {255,0,0,255};
     SDL_Color recycle_planet_color = {0,255,0,255};
+    SDL_Color ship_color = {255,165,0,155};
+
 
     SDL_SetRenderDrawColor(rend, backgroud_color.r, backgroud_color.g, backgroud_color.b, backgroud_color.a);
     SDL_RenderClear(rend);
@@ -53,6 +67,14 @@ void draw_universe(int initial_trash, int n_of_planets, struct planet_stucture p
             filledCircleColor(rend, (int)trash[i].x, (int)trash[i].y, 5, SDL_ColorToUint(trash_color));
         }
         
+    }
+
+    for (int i = 0; i < n_of_planets; i++) 
+    {
+        if(ship[i].ID != 0)
+        {
+            filledCircleColor(rend, (int)ship[i].x, (int)ship[i].y, 10, SDL_ColorToUint(ship_color));
+        }
     }
 
     SDL_RenderPresent(rend);

@@ -8,6 +8,7 @@
 #define PLANET_RADIUS 20
 #define PLANET_MASS 10
 #define TRASH_MASS 1
+#define SHIP_MASS 1
 #define G 1.0f
 
 typedef struct 
@@ -35,7 +36,18 @@ struct trash_stucture
     int status; 
 };
 
-void universe_data_init(struct planet_stucture planets[], int n_of_planets,struct trash_stucture trash[], int initial_trash, int universe_dimensions,int max_trash);
+struct trash_ship
+{ 
+    float x; 
+    float y; 
+    int capacity;
+    int ID;
+    int mass;
+    vector velocity; 
+    vector acceleration;
+};
+
+void universe_data_init(struct planet_stucture planets[], int n_of_planets,struct trash_stucture trash[], int initial_trash, int universe_dimensions,int max_trash, struct trash_ship ship[]);
 
 int update_trash_count(struct trash_stucture trash[], int max_trash);
 
