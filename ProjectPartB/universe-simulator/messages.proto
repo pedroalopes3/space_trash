@@ -1,0 +1,67 @@
+syntax = "proto2";
+
+package trashship;
+
+message PlanetScore {
+    optional string name = 1;
+    optional int32 score = 2;
+}
+
+message ShipCapacity {
+    optional uint32 capacity = 1;
+    optional string name = 2;
+}
+
+message ScoreUpdate {
+    optional uint32 trash_count = 1;
+    repeated ShipCapacity ships = 2;
+    repeated PlanetScore planet_scores = 3;
+}
+
+message Planet {
+    optional float x = 1;
+    optional float y = 2;
+    optional int32 isrecycle = 3;
+}
+
+message PlanetUpdate {
+    optional int32 planet_index = 1;
+    optional int32 isrecycle = 2;
+}
+
+message Trash {
+    optional float x = 1;
+    optional float y = 2;
+    optional int32 status = 3;
+}
+
+message Ship {
+    optional float x = 1;
+    optional float y = 2;
+    optional int32 ID = 3;
+}
+
+message InitialSetupMessage {
+    repeated Planet planets = 1;
+    repeated Trash trash = 2;
+    repeated Ship ships = 3;
+}
+
+message UpdateMessage {
+    repeated PlanetUpdate planets = 1;
+    repeated Trash trash = 2;
+    repeated Ship ships = 3;
+    optional int32 status = 4;  // 0 = normal, -3 = server closing (SDL_QUIT), -4 = universe implosion
+}
+
+message ClientMessage {
+    optional uint32 ship_id = 1;  // 0 = new client, otherwise existing id
+    optional uint32 command = 2;   // movement command code
+}
+
+message ServerMessage {
+    optional uint32 ship_id = 1;   // assigned or echoed ship id
+    optional int32  status = 2;    // 0 = ok, negative = error
+    optional InitialSetupMessage initial_setup = 3;  // sent when ship_id=0 (new client)
+}
+
