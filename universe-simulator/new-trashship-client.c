@@ -213,7 +213,13 @@ int main(void)
                     default:
                         break;
                 }
-            
+                break;
+
+            case SDL_KEYUP:
+                // Se largou a tecla para de enviar comando
+                key_pressed = 0;
+                break;
+
             case SDL_USEREVENT:
             {
                 if (event.user.code == 2) 

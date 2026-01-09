@@ -22,6 +22,7 @@ void universe_data_init(struct planet_stucture planets[], int n_of_planets,struc
         planets[i].mass = PLANET_MASS;
         planets[i].name = 'A' + (i % 26);
         planets[i].isrecycle = 0;
+        planets[i].recycled_trash = 0;
     }
     
     planets[rand() % n_of_planets].isrecycle = 1; 

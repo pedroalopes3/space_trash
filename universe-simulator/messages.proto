@@ -6,11 +6,13 @@ message Planet {
     optional float x = 1;
     optional float y = 2;
     optional int32 isrecycle = 3;
+    optional int32 recycled_count = 4;
 }
 
 message PlanetUpdate {
     optional int32 planet_index = 1;
     optional int32 isrecycle = 2;
+    optional int32 recycled_count = 3;
 }
 
 message Trash {
@@ -23,6 +25,7 @@ message Ship {
     optional float x = 1;
     optional float y = 2;
     optional int32 ID = 3;
+    optional int32 cargo = 4;
 }
 
 message InitialSetupMessage {

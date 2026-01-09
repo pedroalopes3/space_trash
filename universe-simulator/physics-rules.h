@@ -3,6 +3,11 @@
 
 #include "universe-data.h"
 
+
+vector make_vector(float x, float y);
+vector add_vectors(vector a, vector b);
+vector scale_vector(vector v, float s);
+
 void correct_position(float *coord, int universe_dimensions);
 void new_trash_acceleration(struct planet_stucture planets[], int total_planets, struct trash_stucture trash[], int total_trash);
 void new_trash_velocity(struct trash_stucture trash[], int total_trash);

@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package trashsimulator;
+
+message Join {
+    int32 join_code = 1;
+}
+
+message JoinResponse {
+    int32 client_id = 1;
+}
+
+message MoveCommand {
+    int32 client_id = 1;
+    int32 command = 2;
+}
+
+message MoveResponse {
+    int32 client_id = 1;
+    string status = 2;
+}

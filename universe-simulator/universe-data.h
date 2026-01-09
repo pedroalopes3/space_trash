@@ -24,6 +24,7 @@ struct planet_stucture
     float y; 
     int mass;
     int isrecycle; 
+    int recycled_trash;
 };
 
 struct trash_stucture 

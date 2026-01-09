@@ -11,6 +11,8 @@
 #include "communication.h"
 #include "messages.pb-c.h"
 
+#define SHIP_THRUST 0.001
+
 void * input_communication(void* shipstructarg);
 static int find_ship_index_by_id(struct trash_ship ship[], int n, int id);
 static int allocate_ship_slot(struct trash_ship ship[], int n, int universe_dimensions);
@@ -25,6 +27,7 @@ typedef struct
     int max_trash;
     struct trash_ship *ship;
     int universe_dimensions;
+    pthread_mutex_t lock;
 } UniverseContext;
 
 Uint32 timer_callback(Uint32 interval, void* param){
@@ -146,6 +149,11 @@ int main()
     ctx->max_trash = max_trash;
     ctx->ship = ship;
     ctx->universe_dimensions = universe_dimensions;
+    
+    if (pthread_mutex_init(&ctx->lock, NULL) != 0) {
+        fprintf(stderr, "Mutex init failed\n");
+        return 1;
+    }
 
     pthread_t thread_id, broadcast_id;
 
@@ -177,14 +185,26 @@ int main()
 
                 if (event.user.code == 3)
                 {
-                    add_trash(trash, max_trash, universe_dimensions);
-                    trash_count = update_trash_count(trash, max_trash);
+                    int active_ships = 0;
+                    for (int i = 0; i < n_of_planets; i++) {
+                        if (ship[i].ID != 0) {
+                        active_ships++;
+                        }
+                    }
+
+                    if (active_ships > 0) {
+                        add_trash(trash, max_trash, universe_dimensions);
+                        trash_count = update_trash_count(trash, max_trash);
+                     }
+ 
                 }
 
                 if(event.user.code == 4)
                 {
+                    pthread_mutex_lock(&ctx->lock);
                     physics_update(planets, n_of_planets, trash, max_trash, universe_dimensions, ship, ship_capacity);
                     trash_count = update_trash_count(trash, max_trash);
+                    pthread_mutex_unlock(&ctx->lock);
                 }
 
                 if(event.user.code == 5)
@@ -205,6 +225,8 @@ int main()
     free(planets);
     free(trash);
     free(ship);
+    pthread_mutex_destroy(&ctx->lock);
+    free(ctx);
     return 0;
 }
 
@@ -220,7 +242,7 @@ void * input_communication(void* arg)
     if (!comm) 
     {
         fprintf(stderr, "Failed to init server communication\n");
-        return -1;
+        return NULL;
     }
 
     while(1)
@@ -354,33 +376,50 @@ void * input_communication(void* arg)
                 } 
                 else 
                 {
+
+                    pthread_mutex_lock(&ctx->lock);
+                    vector thrust;
+                    thrust.amplitude = 0;
+                    thrust.angle = 0;
+
                     switch (command) 
                     {
-                        case 5:  
-                            ship[idx].velocity.amplitude = 2;
-                            ship[idx].velocity.angle = 0;
+                        case 5: // RIGHT
+                            thrust.amplitude = SHIP_THRUST;
+                            thrust.angle = 0;
                             break;
-                        case 3:  
-                            ship[idx].velocity.amplitude = 2;
-                            ship[idx].velocity.angle = 3.14159;
+                        case 3: // LEFT
+                            thrust.amplitude = SHIP_THRUST;
+                            thrust.angle = 3.14159; // PI
                             break;
-                        case 4:  
-                            ship[idx].velocity.amplitude = 2;
-                            ship[idx].velocity.angle = 1.5708;
+                        case 4: // DOWN
+                            thrust.amplitude = SHIP_THRUST;
+                            thrust.angle = 1.5708; // PI/2
                             break;
-                        case 2:  
-                            ship[idx].velocity.amplitude = 2;
-                            ship[idx].velocity.angle = -1.5708;
+                        case 2: // UP
+                            thrust.amplitude = SHIP_THRUST;
+                            thrust.angle = -1.5708; // -PI/2
                             break;
-                        case 1:  
+                        case 1: // DISCONNECT
                             ship[idx].velocity.amplitude = 0;
-                            ship[idx].velocity.angle = 0;
-                            ship[idx].ID = 0;
+                            ship[idx].ID = 0; // Remove ship
                             break;
                         default:
-                            status = -3;  
+                            // status = -3;
                             break;
                     }
+
+                
+                if (command >= 2 && command <= 5) {
+  
+                    ship[idx].velocity = add_vectors(ship[idx].velocity, thrust);
+    
+
+                    if (ship[idx].velocity.amplitude > 5.0) {
+                        ship[idx].velocity.amplitude = 5.0;
+                    }
+        }
+                    pthread_mutex_unlock(&ctx->lock);
                 }
             }
             
@@ -460,6 +499,8 @@ void send_update(CommHandle *pub, struct planet_stucture *planets, int n_planets
         planet_ptrs[planet_count]->planet_index = i;
         planet_ptrs[planet_count]->has_isrecycle = 1;
         planet_ptrs[planet_count]->isrecycle = planets[i].isrecycle;
+        planet_ptrs[planet_count]->has_recycled_count = 1;
+        planet_ptrs[planet_count]->recycled_count = planets[i].recycled_trash;
         planet_count++;
     }
 
@@ -498,6 +539,8 @@ void send_update(CommHandle *pub, struct planet_stucture *planets, int n_planets
         ship_ptrs[i]->y = ship[i].y;
         ship_ptrs[i]->has_id = 1;
         ship_ptrs[i]->id = ship[i].ID;
+        ship_ptrs[i]->has_cargo = 1;
+        ship_ptrs[i]->cargo = ship[i].capacity;
     }
     msg.ships = ship_ptrs;
     msg.n_ships = n_planets;
@@ -531,6 +574,8 @@ void* broadcast_universe(void* arg)
     while(1) 
     {
         usleep(33000);  
+        pthread_mutex_lock(&ctx->lock);
         send_update(pub, planets, n_planets, trash, max_trash, ship);
+        pthread_mutex_unlock(&ctx->lock);
     }
 }

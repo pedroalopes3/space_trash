@@ -138,17 +138,25 @@ void check_collisions(struct planet_stucture planets[], int total_planets, struc
         {
             for (int j = 0;j < total_planets;j++)
             {
+               
                 if(sqrt(pow(ship[i].x - planets[j].x, 2) + pow(ship[i].y - planets[j].y, 2)) < 10)
                 {
+                    // Nao e reciclegem lixo espalha
                     if(!planets[j].isrecycle)
                     {
-                        for (int k = 0; k < ship[i].capacity; k++) 
-                        {
-                            add_trash(trash, total_trash,universe_dimensions);
+                        for (int k = 0; k < ship[i].capacity; k++) {
+                            add_trash(trash, total_trash, universe_dimensions);
                         }
                     }
-                    ship[i].capacity = 0;
+                    // Se for reciclegem esvazia a nava
+                    else 
+                    {
+                        planets[j].recycled_trash += ship[i].capacity;
+                    }
+
+                    ship[i].capacity = 0; 
                 }
+                
             }
             
             for (int j = 0;j < total_trash;j++)
